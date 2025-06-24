@@ -3,15 +3,11 @@ import type React from "react";
 import "@/app/globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import "@/lib/amplify-config"; // ✅ Add this line
+import "@/lib/amplify-config"; // ✅ Import Amplify config
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata = {
-  title: "ByteX-HydroHero - Smart Irrigation System",
-  description: "AI-powered smart irrigation system for precise plant watering",
-  generator: 'v0.dev'
-};
+// ❌ REMOVE export const metadata — it causes build failure in 'use client' context
 
 export default function RootLayout({
   children,
@@ -20,6 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>ByteX-HydroHero - Smart Irrigation System</title>
+        <meta name="description" content="AI-powered smart irrigation system for precise plant watering" />
+        <meta name="generator" content="v0.dev" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
@@ -28,3 +29,4 @@ export default function RootLayout({
     </html>
   );
 }
+
