@@ -1,50 +1,74 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { X, Eye, EyeOff } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import type React from "react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Auth } from "aws-amplify";
 
 interface AuthModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onAuthSuccess: () => void
-  mode?: "login" | "signup"
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess: () => void;
+  mode?: "login" | "signup";
 }
 
-export function AuthModal({ isOpen, onClose, onAuthSuccess, mode = "login" }: AuthModalProps) {
-  const [currentMode, setCurrentMode] = useState<"login" | "signup">(mode)
-  const [showPassword, setShowPassword] = useState(false)
+export function AuthModal({
+  isOpen,
+  onClose,
+  onAuthSuccess,
+  mode = "login",
+}: AuthModalProps) {
+  const [currentMode, setCurrentMode] = useState<"login" | "signup">(mode);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
     name: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      onAuthSuccess()
-    }, 1500)
-  }
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
-    }))
-  }
+    }));
+  };
 
-  if (!isOpen) return null
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (currentMode === "signup") {
+        await Auth.signUp({
+          username: formData.email,
+          password: formData.password,
+          attributes: {
+            email: formData.email,
+            name: formData.name,
+          },
+        });
+        alert("Signup successful! Please check your email to confirm your account.");
+        setCurrentMode("login"); // switch to login
+      } else {
+        await Auth.signIn(formData.email, formData.password);
+        alert("Login successful!");
+        onAuthSuccess();
+        onClose();
+      }
+    } catch (error: any) {
+      alert(error.message || "Something went wrong");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -64,7 +88,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, mode = "login" }: Au
             </button>
 
             <div className="text-center mb-6">
-              <h2 className="text-xl font-bold mb-2">{currentMode === "login" ? "Welcome Back" : "Create Account"}</h2>
+              <h2 className="text-xl font-bold mb-2">
+                {currentMode === "login" ? "Welcome Back" : "Create Account"}
+              </h2>
               <p className="text-sm text-muted-foreground">
                 {currentMode === "login"
                   ? "Sign in to access plant analysis features"
@@ -161,7 +187,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, mode = "login" }: Au
                 onClick={() => setCurrentMode(currentMode === "login" ? "signup" : "login")}
                 className="text-sm text-orange-600 dark:text-orange-400 hover:underline"
               >
-                {currentMode === "login" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+                {currentMode === "login"
+                  ? "Don't have an account? Sign up"
+                  : "Already have an account? Sign in"}
               </button>
             </div>
 
@@ -174,5 +202,7 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, mode = "login" }: Au
         </motion.div>
       </AnimatePresence>
     </div>
-  )
+  );
 }
+
+
